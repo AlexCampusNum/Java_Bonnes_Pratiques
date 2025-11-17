@@ -12,7 +12,7 @@ import static org.checkerframework.checker.units.UnitsTools.m;
 public class Server {
     private int port;
     private String hostname = "0.0.0.0";
-    private List<ClientHandler> _clientsList = new ArrayList<>();
+    private List<ClientHandler> clientsList = new ArrayList<>();
     private ServerSocket severSocket;
     private boolean isRunning = false;
     private List<String> history = new ArrayList<>();
@@ -31,7 +31,7 @@ public class Server {
         while (isRunning) {
             Socket clientHandlerSocket = severSocket.accept();
             ClientHandler clientHandler = new ClientHandler(clientHandlerSocket, this);
-            _clientsList.add(clientHandler);
+            clientsList.add(clientHandler);
             Thread thread = new Thread(clientHandler);
             thread.start();
         }
@@ -51,8 +51,8 @@ public class Server {
             history.remove(0);
         }
 
-        for (int i = 0; i < _clientsList.size(); i++) {
-            ClientHandler clientHandler = _clientsList.get(i);
+        for (int i = 0; i < clientsList.size(); i++) {
+            ClientHandler clientHandler = clientsList.get(i);
             if (clientHandler != sender && clientHandler.userName != null) {
                 try {
                     clientHandler.writer.println(msg);
@@ -89,10 +89,7 @@ public class Server {
                 OutputStream outStream = socket.getOutputStream();
                 writer = new PrintWriter(new OutputStreamWriter(outStream), true);
 
-                writer.println("Enter your name: ");
-                userName = reader.readLine();
-                String msgPrint = userName + " has joined the chat.";
-                System.out.println(m);
+                String msgPrint = InputAndDisplayClientJoin(reader);
 
                 sendHistoryToClient(this);
                 broadcastMessage(this, msgPrint);
@@ -100,17 +97,29 @@ public class Server {
                 String messageReceived;
                 while ((messageReceived = reader.readLine()) != null) {
                     msgPrint = userName + ": " + messageReceived;
-                    System.out.println(m);
+                    System.out.println(msgPrint);
                     broadcastMessage(this, msgPrint);
                 }
 
-                String msgLeave = userName + " has left the chat.";
-                System.out.println(msgLeave);
-                broadcastMessage(this, msgLeave);
+                UserLeft();
 
             } catch (IOException e) {
                 System.out.println("Client error");
             }
+        }
+
+        private String InputAndDisplayClientJoin(BufferedReader reader) throws IOException {
+            writer.println("Enter your name: ");
+            userName = reader.readLine();
+            String msgPrint = userName + " has joined the chat.";
+            System.out.println(msgPrint);
+            return msgPrint;
+        }
+
+        private void UserLeft() {
+            String msgLeave = userName + " has left the chat.";
+            System.out.println(msgLeave);
+            broadcastMessage(this, msgLeave);
         }
     }
 }
