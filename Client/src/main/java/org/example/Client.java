@@ -6,33 +6,31 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.apache.commons.io.IOUtils;
-import com.google.gson.Gson;
 
 public class Client {
-    private String adr;
-    private int p;
-    private Socket s;
+    private String host;
+    private int port;
+    private Socket socket;
     private ExecutorService exec;
-    private BufferedReader lecteurConsole;
+    private BufferedReader consoleReader;
     private int messageCount = 0;
 
     public Client(String serverAddress, int serverPort) {
-        this.adr = serverAddress;
-        this.p = serverPort;
+        this.host = serverAddress;
+        this.port = serverPort;
     }
 
     // méthode pour se connecter
     public void Connect() throws IOException, InterruptedException, ExecutionException {
-        s = new Socket(adr, p);
+        socket = new Socket(host, port);
         exec = Executors.newFixedThreadPool(2);
 
-        Future<?> t1 = exec.submit(this::receiveMessages);
+        Future<?> thread1 = exec.submit(this::receiveMessages);
         Thread.sleep(100);
-        Future<?> t2 = exec.submit(this::sendMessages);
+        Future<?> thread2 = exec.submit(this::sendMessages);
 
-        t1.get();
-        t2.get();
+        thread1.get();
+        thread2.get();
 
         shutdown();
     }
@@ -40,7 +38,7 @@ public class Client {
     // reception des messages
     private void receiveMessages() {
         try {
-            InputStream inputStream = s.getInputStream();
+            InputStream inputStream = socket.getInputStream();
             InputStreamReader isr = new InputStreamReader(inputStream);
             BufferedReader r = new BufferedReader(isr);
             String msg;
@@ -57,12 +55,12 @@ public class Client {
     // envoi messages
     private void sendMessages() {
         try {
-            OutputStream outputStream = s.getOutputStream();
+            OutputStream outputStream = socket.getOutputStream();
             OutputStreamWriter osw = new OutputStreamWriter(outputStream);
             BufferedWriter w = new BufferedWriter(osw);
-            lecteurConsole = new BufferedReader(new InputStreamReader(System.in));
+            consoleReader = new BufferedReader(new InputStreamReader(System.in));
             String input;
-            while ((input = lecteurConsole.readLine()) != null) {
+            while ((input = consoleReader.readLine()) != null) {
                 w.write(input);
                 w.newLine();
                 w.flush();
@@ -79,8 +77,8 @@ public class Client {
         if (exec != null) {
             exec.shutdown();
         }
-        if (s != null && !s.isClosed()) {
-            s.close();
+        if (socket != null && !socket.isClosed()) {
+            socket.close();
         }
     }
 
