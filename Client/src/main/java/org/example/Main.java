@@ -8,9 +8,9 @@ public class Main {
     public static void main(String[] args) {
         String host = "localhost";
         int _Port = 12345;
-        Client c = new Client(host, _Port);
+        Client client = new Client(host, _Port);
         try {
-            c.Connect();
+            client.Connect();
         } catch (IOException | InterruptedException | ExecutionException e) {
             System.out.println("Failed");
         }

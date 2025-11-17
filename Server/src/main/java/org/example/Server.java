@@ -7,15 +7,13 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.checkerframework.checker.units.UnitsTools.m;
 
 public class Server {
-    private int port;
-    private String hostname = "0.0.0.0";
-    private List<ClientHandler> clientsList = new ArrayList<>();
+    private final int port;
+    private final List<ClientHandler> clientsList = new ArrayList<>();
     private ServerSocket severSocket;
     private boolean isRunning = false;
-    private List<String> history = new ArrayList<>();
+    private final List<String> history = new ArrayList<>();
     private int count = 0;
 
     public Server(int port) {
@@ -23,49 +21,65 @@ public class Server {
     }
 
     public void startListenForNewClient() throws IOException {
-        severSocket = new ServerSocket();
-        severSocket.bind(new InetSocketAddress(hostname, port));
-        isRunning = true;
-        System.out.println("Chat server started on port " + port);
+        try {
+            severSocket = new ServerSocket();
+            String hostname = "0.0.0.0";
+            severSocket.bind(new InetSocketAddress(hostname, port));
+            isRunning = true;
+            System.out.println("Chat server started on port " + port);
 
-        while (isRunning) {
-            Socket clientHandlerSocket = severSocket.accept();
-            ClientHandler clientHandler = new ClientHandler(clientHandlerSocket, this);
-            clientsList.add(clientHandler);
-            Thread thread = new Thread(clientHandler);
-            thread.start();
+            while (isRunning) {
+                try {
+                    Socket clientHandlerSocket = severSocket.accept();
+                    ClientHandler clientHandler = new ClientHandler(clientHandlerSocket, this);
+                    clientsList.add(clientHandler);
+                    Thread thread = new Thread(clientHandler);
+                    thread.start();
+                } catch (IOException e) {
+                    System.out.println("Error accepting client: " + e.getMessage());
+                }
+            }
+        }catch (IOException e) {
+            System.out.println("Server failed to start: " + e.getMessage());
         }
     }
 
-    public void stop() throws IOException {
-        isRunning = false;
-        if (severSocket != null && !severSocket.isClosed()) {
-            severSocket.close();
-        }
-    }
+//    public void stop() throws IOException {
+//        isRunning = false;
+//        if (severSocket != null && !severSocket.isClosed()) {
+//            severSocket.close();
+//        }
+//    }
 
     // méthode pour envoyer message à tout le monde
     public void broadcastMessage(ClientHandler sender, String msg) {
+        if (msg == null || msg.isBlank()) return;
+
         history.add(msg);
         if (history.size() > 100) {
             history.remove(0);
         }
 
-        for (int i = 0; i < clientsList.size(); i++) {
-            ClientHandler clientHandler = clientsList.get(i);
+        List<ClientHandler> disconnectedClients = new ArrayList<>();
+
+        for (ClientHandler clientHandler : clientsList) {
             if (clientHandler != sender && clientHandler.userName != null) {
                 try {
                     clientHandler.writer.println(msg);
                 } catch (Exception e) {
+                    System.out.println("Failed to send message to " + clientHandler.userName);
+                    disconnectedClients.add(clientHandler);
                 }
             }
         }
+
+        clientsList.removeAll(disconnectedClients);
     }
 
     // envoi historique
-    public void sendHistoryToClient(ClientHandler c) {
+    public void sendHistoryToClient(ClientHandler client) {
         for (int i = 0; i < history.size(); i++) {
-            c.writer.println(history.get(i));
+            client.writer.println(history.get(i));
         }
     }
 
@@ -104,7 +118,7 @@ public class Server {
                 UserLeft();
 
             } catch (IOException e) {
-                System.out.println("Client error");
+                System.out.println(userName + " has been disconnected");
             }
         }
 

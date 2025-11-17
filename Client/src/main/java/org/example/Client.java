@@ -8,11 +8,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Client {
-    private String host;
-    private int port;
+    private final String host;
+    private final int port;
     private Socket socket;
     private ExecutorService exec;
-    private BufferedReader consoleReader;
     private int messageCount = 0;
 
     public Client(String serverAddress, int serverPort) {
@@ -39,10 +38,10 @@ public class Client {
     private void receiveMessages() {
         try {
             InputStream inputStream = socket.getInputStream();
-            InputStreamReader isr = new InputStreamReader(inputStream);
-            BufferedReader r = new BufferedReader(isr);
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
             String msg;
-            while ((msg = r.readLine()) != null) {
+            while ((msg = bufferedReader.readLine()) != null) {
                 System.out.println("\r" + msg);
                 System.out.print("You: ");
             }
@@ -58,7 +57,7 @@ public class Client {
             OutputStream outputStream = socket.getOutputStream();
             OutputStreamWriter osw = new OutputStreamWriter(outputStream);
             BufferedWriter w = new BufferedWriter(osw);
-            consoleReader = new BufferedReader(new InputStreamReader(System.in));
+            BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
             String input;
             while ((input = consoleReader.readLine()) != null) {
                 w.write(input);
