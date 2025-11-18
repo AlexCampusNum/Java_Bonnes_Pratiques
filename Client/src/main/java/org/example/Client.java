@@ -22,6 +22,7 @@ public class Client {
     // méthode pour se connecter
     public void Connect() throws IOException, InterruptedException, ExecutionException {
         socket = new Socket(host, port);
+        socket.setSoTimeout(30000);
         exec = Executors.newFixedThreadPool(2);
 
         Future<?> thread1 = exec.submit(this::receiveMessages);
@@ -36,38 +37,35 @@ public class Client {
 
     // reception des messages
     private void receiveMessages() {
-        try {
-            InputStream inputStream = socket.getInputStream();
-            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             String msg;
             while ((msg = bufferedReader.readLine()) != null) {
                 System.out.println("\r" + msg);
                 System.out.print("You: ");
             }
-        } catch (IOException e) {
-            System.out.println("Disconnected");
+        }catch(IOException e){
+            if (!socket.isClosed()) {
+                System.out.println("Disconnected from server");
+            }
         }
-        // TODO: fermer le reader
     }
 
-    // envoi messages
+
+        // envoi messages
     private void sendMessages() {
-        try {
-            OutputStream outputStream = socket.getOutputStream();
-            OutputStreamWriter osw = new OutputStreamWriter(outputStream);
-            BufferedWriter w = new BufferedWriter(osw);
-            BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+             BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in))) {
+
             String input;
             while ((input = consoleReader.readLine()) != null) {
-                w.write(input);
-                w.newLine();
-                w.flush();
+                writer.write(input);
+                writer.newLine();
+                writer.flush();
                 System.out.print("You: ");
-                messageCount = messageCount + 1;
+                messageCount++;
             }
         } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Error sending message : " + e.getMessage());
         }
     }
 

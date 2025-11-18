@@ -10,7 +10,8 @@ public class Main {
         try {
             server.startListenForNewClient();
         } catch (IOException e) {
-            System.out.println("erreur");
+            System.err.println("Server connection error");
+            System.exit(1);
         }
     }
 }

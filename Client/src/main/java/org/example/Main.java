@@ -7,12 +7,13 @@ import java.util.concurrent.ExecutionException;
 public class Main {
     public static void main(String[] args) {
         String host = "localhost";
-        int _Port = 12345;
-        Client client = new Client(host, _Port);
+        int port = 12345;
+        Client client = new Client(host, port);
         try {
             client.Connect();
         } catch (IOException | InterruptedException | ExecutionException e) {
-            System.out.println("Failed");
+            System.err.println("Failed, client connection error");
+            System.exit(1);
         }
     }
 }

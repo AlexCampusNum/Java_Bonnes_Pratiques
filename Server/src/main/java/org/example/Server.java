@@ -55,6 +55,10 @@ public class Server {
     public void broadcastMessage(ClientHandler sender, String msg) {
         if (msg == null || msg.isBlank()) return;
 
+        if (msg.length()>2000){
+            return;
+        }
+
         history.add(msg);
         if (history.size() > 100) {
             history.remove(0);
@@ -98,10 +102,8 @@ public class Server {
         @Override
         public void run() {
             try {
-                InputStream inputStream = socket.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                OutputStream outStream = socket.getOutputStream();
-                writer = new PrintWriter(new OutputStreamWriter(outStream), true);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
 
                 String msgPrint = InputAndDisplayClientJoin(reader);
 
@@ -110,30 +112,46 @@ public class Server {
 
                 String messageReceived;
                 while ((messageReceived = reader.readLine()) != null) {
+                    if (messageReceived.length() > 400) {
+                        writer.println("Message too long (max 400 chars).");
+                        continue;
+                    }
                     msgPrint = userName + ": " + messageReceived;
                     System.out.println(msgPrint);
                     broadcastMessage(this, msgPrint);
                 }
 
-                UserLeft();
-
             } catch (IOException e) {
                 System.out.println(userName + " has been disconnected");
+            }finally {
+                UserLeft();
+                try {
+                    socket.close();
+                } catch (IOException ignored) {}
             }
         }
 
         private String InputAndDisplayClientJoin(BufferedReader reader) throws IOException {
             writer.println("Enter your name: ");
             userName = reader.readLine();
+
+            if (userName == null || userName.isBlank()) {
+                userName = "Guest" + clientId;
+            }else if(userName.length() > 50) {
+                userName = userName.substring(0, 50);
+            }
+
             String msgPrint = userName + " has joined the chat.";
             System.out.println(msgPrint);
             return msgPrint;
         }
 
         private void UserLeft() {
-            String msgLeave = userName + " has left the chat.";
-            System.out.println(msgLeave);
-            broadcastMessage(this, msgLeave);
+            if (userName != null) {
+                String msgLeave = userName + " has left the chat.";
+                System.out.println(msgLeave);
+                broadcastMessage(this, msgLeave);
+            }
         }
     }
 }
