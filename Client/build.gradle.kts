@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    implementation("commons-io:commons-io:2.17")
+    implementation("commons-io:commons-io:2.21")
     implementation("org.apache.commons:commons-lang3:3.20.0")
     implementation("com.google.code.gson:gson:2.13.2")
     implementation("org.slf4j:slf4j-api:1.7.25")

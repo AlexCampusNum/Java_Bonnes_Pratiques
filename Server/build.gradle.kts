@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    implementation("commons-io:commons-io:2.17")
+    implementation("commons-io:commons-io:2.21")
     implementation("org.apache.commons:commons-lang3:3.20.0")
     implementation("com.google.guava:guava:33.5.0-jre")
     implementation("org.json:json:20250517")
