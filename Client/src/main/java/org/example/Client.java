@@ -25,15 +25,19 @@ public class Client {
         socket.setSoTimeout(30000);
         exec = Executors.newFixedThreadPool(2);
 
-        Future<?> thread1 = exec.submit(this::receiveMessages);
-        Thread.sleep(100);
-        Future<?> thread2 = exec.submit(this::sendMessages);
+        // Lancer les threads
+        exec.submit(this::receiveMessages);
+        exec.submit(this::sendMessages);
 
-        thread1.get();
-        thread2.get();
-
-        shutdown();
+        // Shutdown automatique si la JVM s'arrête
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                shutdown();
+            } catch (IOException ignored) {
+            }
+        }));
     }
+
 
     // reception des messages
     private void receiveMessages() {
@@ -43,7 +47,7 @@ public class Client {
                 System.out.println("\r" + msg);
                 System.out.print("You: ");
             }
-        }catch(IOException e){
+        } catch (IOException e) {
             if (!socket.isClosed()) {
                 System.out.println("Disconnected from server");
             }
@@ -51,7 +55,7 @@ public class Client {
     }
 
 
-        // envoi messages
+    // envoi messages
     private void sendMessages() {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
              BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in))) {

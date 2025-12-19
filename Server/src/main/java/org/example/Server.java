@@ -6,15 +6,17 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class Server {
     private final int port;
-    private final List<ClientHandler> clientsList = new ArrayList<>();
+    private final List<ClientHandler> clientsList = new CopyOnWriteArrayList<>();
     private ServerSocket severSocket;
     private boolean isRunning = false;
-    private final List<String> history = new ArrayList<>();
-    private int count = 0;
+    private final List<String> history = new CopyOnWriteArrayList<>();
+    private final AtomicInteger count = new AtomicInteger(0);
 
     public Server(int port) {
         this.port = port;
@@ -53,7 +55,9 @@ public class Server {
 
     // méthode pour envoyer message à tout le monde
     public void broadcastMessage(ClientHandler sender, String msg) {
-        if (msg == null || msg.isBlank()) return;
+        if (msg == null || msg.isBlank()){
+            return;
+        }
 
         if (msg.length()>2000){
             return;
@@ -96,7 +100,7 @@ public class Server {
 
         public ClientHandler(Socket socket, Server srv) {
             this.socket = socket;
-            this.clientId = count++;
+            this.clientId = count.getAndIncrement();
         }
 
         @Override

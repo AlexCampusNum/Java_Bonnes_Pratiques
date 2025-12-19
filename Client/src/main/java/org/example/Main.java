@@ -11,6 +11,7 @@ public class Main {
         Client client = new Client(host, port);
         try {
             client.Connect();
+            Thread.currentThread().join();
         } catch (IOException | InterruptedException | ExecutionException e) {
             System.err.println("Failed, client connection error");
             System.exit(1);
